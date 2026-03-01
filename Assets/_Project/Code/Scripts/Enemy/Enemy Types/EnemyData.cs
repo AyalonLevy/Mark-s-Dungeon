@@ -1,10 +1,9 @@
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "NewEnemyData", menuName = "Data/Enemy Data")]
-public class EnemyData : ScriptableObject
+public class EnemyData : EntityDataSO
 {
     [Header("Health Settings")]
-    public float MaxHealth = 100.0f;
     [Tooltip("Amount of HP regenerated per second when not in combat")]
     public float HealthRegenerationRate = 1.0f;
 

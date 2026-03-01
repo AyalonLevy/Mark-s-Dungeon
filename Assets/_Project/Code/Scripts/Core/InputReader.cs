@@ -20,10 +20,10 @@ public class InputReader : MonoBehaviour
 
     private void Awake()
     {
-        m_moveAction = InputSystem.actions.FindAction("Move");
-        m_attackjAction = InputSystem.actions.FindAction("Attack");
-        m_interactAction = InputSystem.actions.FindAction("Interact");
-        m_sprintAction = InputSystem.actions.FindAction("Sprint");
+        m_moveAction = InputAction.FindAction("Move");
+        m_attackjAction = InputAction.FindAction("Attack");
+        m_interactAction = InputAction.FindAction("Interact");
+        m_sprintAction = InputAction.FindAction("Sprint");
     }
 
 

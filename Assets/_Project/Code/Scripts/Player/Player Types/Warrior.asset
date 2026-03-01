@@ -16,6 +16,10 @@ MonoBehaviour:
   HealthRegenerationRate: 1
   WalkSpeed: 5
   SprintSpeed: 8
+  MaxStamina: 100
+  StaminaDeplitionRate: 10
+  StaminaRecoveryRate: 5
   AttackDamage: 10
   AttackCooldown: 0.5
   MaxMana: 50
+  ManaRecoveryRate: 3

@@ -1,16 +1,33 @@
 using UnityEngine;
 
-public class PlayerAttackState : MonoBehaviour
+public class PlayerAttackState : PlayerState
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public PlayerAttackState(Player player, PlayerStateMachine playerStateMachine, InputReader inputReader, PlayerData playerData) : base(player, playerStateMachine, inputReader, playerData)
     {
-        
     }
 
-    // Update is called once per frame
-    void Update()
+    public override void AnimationTriggerEvent(Player.AnimationTriggerType triggerType)
     {
-        
+        base.AnimationTriggerEvent(triggerType);
+    }
+
+    public override void EnterState()
+    {
+        base.EnterState();
+    }
+
+    public override void ExitState()
+    {
+        base.ExitState();
+    }
+
+    public override void FrameUpdate()
+    {
+        base.FrameUpdate();
+    }
+
+    public override void PhysicsUpdate()
+    {
+        base.PhysicsUpdate();
     }
 }
