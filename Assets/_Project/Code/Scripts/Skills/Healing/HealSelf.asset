@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8135c5622469394bad0860a4a382f56, type: 3}
+  m_Name: HealSelf
+  m_EditorClassIdentifier: Assembly-CSharp::HealSkillSO
+  SkillName: HealSelf
+  Icon: {fileID: 0}
+  Cooldown: 10
+  ManaCost: 10
+  healAmount: 25
