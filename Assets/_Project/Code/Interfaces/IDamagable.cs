@@ -4,6 +4,6 @@ public interface IDamagable
 
     void Die();
 
-    float MaxHealth { get; }
+    float MaxHealth { get; set; }
     float CurrentHealth { get; set; }
 }

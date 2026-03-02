@@ -9,9 +9,5 @@ public class HealSkillSO : SkillData
     public override void Execute(Transform caster, IDamagable target = null)
     {
         target.CurrentHealth += healAmount;
-        if (target.CurrentHealth >= target.MaxHealth)
-        {
-            target.CurrentHealth = target.MaxHealth;
-        }
     }
 }

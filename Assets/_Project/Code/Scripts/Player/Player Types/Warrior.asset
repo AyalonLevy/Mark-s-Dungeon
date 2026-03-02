@@ -9,15 +9,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7569c4e84b40f9546a98b70bc8d92bf9, type: 3}
+  m_Script: {fileID: 11500000, guid: cc0709d57887a884b8568b2b58c85200, type: 3}
   m_Name: Warrior
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerData
+  m_EditorClassIdentifier: Assembly-CSharp::EntityData
   MaxHealth: 100
   HealthRegenerationRate: 1
+  MovementThreshold: 0.01
   WalkSpeed: 5
   SprintSpeed: 8
   MaxStamina: 100
-  StaminaDeplitionRate: 10
+  StaminaDrainRate: 10
   StaminaRecoveryRate: 5
   AttackDamage: 10
   AttackCooldown: 0.5

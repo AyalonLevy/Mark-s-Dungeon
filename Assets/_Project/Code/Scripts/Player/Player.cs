@@ -1,117 +1,51 @@
 using UnityEngine;
 
-public class Player : MonoBehaviour, IDamagable, IMoveable
+public class Player : Entity
 {
     [Header("Dependencies")]
-    [SerializeField] private PlayerData playerData;
     [SerializeField] private InputReader inputReader;
 
-    public float MaxHealth => playerData.MaxHealth;
-    public float CurrentHealth { get; set; }
-    public float CurrentMana { get; set; }
-    public float CurrentStamina { get; set; }
-    public Rigidbody RB { get; set; }
-    public bool IsFacingRight { get; set; } = true;  // based on the default gameobject facing direction
-
-    #region State Machine Variables
-
-    public PlayerStateMachine StateMachine { get; set; }
-    public PlayerIdleState IdleState { get; set; }
-    public PlayerMoveState MoveState { get; set; }
-    public PlayerAttackState AttackState { get; set; }
-
-    #endregion
-
-    private void Awake()
+    protected override void Awake()
     {
-        RB = GetComponent<Rigidbody>();
+        base.Awake();
 
-        StateMachine = new PlayerStateMachine();
-
+        IdleState = new IdleState(this, StateMachine);
+        MoveState = new MoveState(this, StateMachine);
+        AttackState = new AttackState(this, StateMachine);
     }
+
     private void Start()
     {
-        CurrentHealth = MaxHealth;
-        CurrentMana = playerData.MaxMana;
-        CurrentStamina = playerData.MaxStamina;
-
-        IdleState = new PlayerIdleState(this, StateMachine, inputReader, playerData);
-        MoveState = new PlayerMoveState(this, StateMachine, inputReader, playerData);
-        AttackState = new PlayerAttackState(this, StateMachine, inputReader, playerData);
-
         StateMachine.Initialize(IdleState);
     }
 
     private void Update()
     {
-        StateMachine.CurrentPlayerState.FrameUpdate();
+        StateMachine.CurrentState.FrameUpdate();
     }
 
     private void FixedUpdate()
     {
-        StateMachine.CurrentPlayerState.PhysicsUpdate();
+        StateMachine.CurrentState.PhysicsUpdate();
     }
 
     #region Health / Die Functions
 
-    public void Damage(float damageAmount)
+    protected override void OnDeath()
     {
-        CurrentHealth -= damageAmount;
-
-        if (CurrentHealth <= 0)
-        {
-            Die();
-        }
-    }
-
-    public void Die()
-    {
-        //TODO: Death logic - Animation + sounds + gameover etc...
-        Destroy(gameObject);
+        //TODO: Trigger gameover
+        Debug.Log("I died! (player in case you forgot....)");
     }
 
     #endregion
 
-    #region Movement Functions
+    #region Input Implementation
 
-    public void Move(Vector3 velocity)
-    {
-        RB.linearVelocity = velocity;
-        RB.angularVelocity = Vector3.zero;
-        CheckForLeftOrRight(velocity); 
-    }
+    public override Vector2 GetMoveInput() => inputReader.movement;
 
-    public void CheckForLeftOrRight(Vector3 velocity)
-    {
-        if (IsFacingRight && velocity.x < 0.0f)
-        {
-            Vector3 rotator = new(transform.rotation.x, 180.0f, transform.rotation.z);
-            transform.rotation = Quaternion.Euler(rotator);
-            IsFacingRight = !IsFacingRight;
-        }
-        else if (!IsFacingRight && velocity.x > 0.0f)
-        {
-            Vector3 rotator = new(transform.rotation.x, 0.0f, transform.rotation.z);
-            transform.rotation = Quaternion.Euler(rotator);
-            IsFacingRight = !IsFacingRight;
-        }
-    }
+    public override bool IsAttacking() => inputReader.IsAttacking;
 
-    #endregion
-
-    #region Animation Triggers
-
-    private void AnimationTriggerEvent(AnimationTriggerType triggerType)
-    {
-        StateMachine.CurrentPlayerState.AnimationTriggerEvent(triggerType);
-
-    }
-
-    public enum AnimationTriggerType
-    {
-        EnemyDamage,
-        PlayFootstepSound
-    }
+    public override bool IsSprinting() => inputReader.IsSprinting;
 
     #endregion
 }
