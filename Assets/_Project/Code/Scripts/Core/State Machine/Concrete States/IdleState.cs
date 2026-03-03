@@ -13,7 +13,7 @@ public class IdleState : EntityState
 
         entity.SetRigActive(false);
         entity.UpdateVisualSpeed(0f);
-        entity.Move(Vector3.zero, Vector3.zero);
+        entity.Move(Vector3.zero);
     }
 
     public override void ExitState()

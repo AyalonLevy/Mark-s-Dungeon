@@ -37,13 +37,17 @@ public class MoveState : EntityState
 
         float speed = isSprinting ? entity.Data.SprintSpeed : entity.Data.WalkSpeed;
 
-        Vector3 moveVelocity = new(rawDirection.x * speed, 0.0f, rawDirection.y * speed);
+        Vector3 direction = new(rawDirection.x, 0.0f, rawDirection.y);
 
+        Vector3 velocity = direction * speed;
 
-        entity.Move(moveVelocity, Vector3.zero);
-        entity.UpdateVisualSpeed(moveVelocity.magnitude);
+        entity.Move(velocity);
 
-        if (isSprinting && moveVelocity.sqrMagnitude > entity.Data.MovementThreshold)
+        entity.HandleOrientation(direction);
+
+        entity.UpdateVisualSpeed(velocity.magnitude);
+
+        if (isSprinting && velocity.sqrMagnitude > entity.Data.MovementThreshold)
         {
             entity.CurrentStamina = Mathf.Max(0, entity.CurrentStamina - (entity.Data.StaminaDrainRate * Time.fixedDeltaTime));
         }

@@ -11,6 +11,7 @@ public class EntityData : ScriptableObject
     [Header("Movement Settings")]
     [Tooltip("The threshold for movement input (squared)")]
     [HideInInspector] public float MovementThreshold = 0.01f;
+    public float TurnSpeed = 10.0f;
     public float WalkSpeed = 5.0f;
     public float SprintSpeed = 8.0f;
     public float MaxStamina = 100.0f;
@@ -26,8 +27,9 @@ public class EntityData : ScriptableObject
     [Header("Combat Settings")]
     public float AttackDamage = 10.0f;
     public float AttackCooldown = 0.5f;
-    public LayerMask EnemyLayer;
     public float DetectionRange = 10.0f;
+    public LayerMask EnemyLayer;
+    public LayerMask ObstacleLayer;
 
     [Header("Skill Settings")]
     public float MaxMana = 100.0f;

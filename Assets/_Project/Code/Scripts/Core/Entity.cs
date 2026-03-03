@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
 using System.Collections;
+using UnityEditor.Search;
 
 public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
 {
@@ -12,6 +13,13 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
     [Header("Sockets")]
     public Transform WeaponSocket;
     public Transform ShieldSocket;
+
+    [Header("Combat Awereness")]
+    protected Transform currentTarget;
+
+    [Header("Sensing Settings")]
+    [SerializeField] private float searchInterval = 0.2f;
+    private float _searchTimer;
 
     public float MaxHealth { get; set; }
     private float _currentHealth;
@@ -25,8 +33,6 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
 
     public Rigidbody RB { get; set; }
     public bool IsFacingRight { get; set; } = true;  // based on the default gameobject facing direction
-
-    private bool _enemiesNearby;
 
     private RigBuilder _rigBuilder;
 
@@ -57,6 +63,18 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
         InitializeEquipment();
     }
 
+    protected virtual void Update()
+    {
+        _searchTimer -= Time.deltaTime;
+        if (_searchTimer <= 0)
+        {
+            SearchForTarget();
+            _searchTimer = searchInterval;
+        }
+
+        anim.SetBool("InCombat", currentTarget != null);
+    }
+
     public void SetRigActive(bool active)
     {
         if (_rigBuilder != null)
@@ -65,26 +83,66 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
         }
     }
 
-    protected virtual void Update()
+    private void SearchForTarget()
     {
-        CheckForCombatStatus();
+        Collider[] potentialTargets = Physics.OverlapSphere(transform.position, Data.DetectionRange, Data.EnemyLayer);
+        
+        if (potentialTargets.Length == 0)
+        {
+            currentTarget = null;
+            return;
+        }
+ 
+        currentTarget = GetClosestTarget(potentialTargets);
     }
 
-    private void CheckForCombatStatus()
+    public Transform GetClosestTarget(Collider[] potentialTargets)
     {
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, Data.DetectionRange, Data.EnemyLayer);
-        bool currentlyEnemiesNearby = hitColliders.Length > 0;
+        float closestDistanceSqr = Mathf.Infinity;
+        Transform bestTarget = null;
 
-        if (currentlyEnemiesNearby != _enemiesNearby)
+        foreach (var col in potentialTargets)
         {
-            _enemiesNearby = hitColliders.Length > 0;
-            anim.SetBool("InCombat", _enemiesNearby);
+            // Don't target self, self is good
+            if (col.transform == transform)
+            {
+                continue;
+            }
+
+            // Don't target the dead, let them rest in peace
+            if (col.TryGetComponent<IDamagable>(out var damagable))
+            {
+                if (col.TryGetComponent<Entity>(out var e) && e.CurrentHealth <= 0)
+                {
+                    continue;
+                }
+            }
+
+            Vector3 diff = col.transform.position - transform.position;
+            float distSqr = diff.sqrMagnitude;
+
+            if (distSqr < closestDistanceSqr)
+            {
+                // You shouldn't see through walls...
+                Vector3 dirToTarget = diff.normalized;
+                float actualDist = Mathf.Sqrt(distSqr);
+
+                if (!Physics.Raycast(transform.position, dirToTarget, actualDist, Data.ObstacleLayer))
+                {
+                    closestDistanceSqr = distSqr;
+                    bestTarget = col.transform;
+                }
+            }
         }
+
+        return bestTarget;
     }
 
     public abstract Vector2 GetMoveInput();
     public abstract bool IsAttacking();
     public abstract bool IsSprinting();
+
+    #region Equipment SetUp
 
     private void InitializeEquipment()
     {
@@ -116,6 +174,8 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
         item.transform.localPosition = Vector3.zero;
         item.transform.localRotation = Quaternion.identity;
     }
+
+    #endregion
 
     #region Health / Die Functions
 
@@ -152,35 +212,35 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
 
     #region Movement Functions
 
-    public void Move(Vector3 linearVelocity, Vector3 angularVelocity)
+    public void Move(Vector3 velocity)
     {
-        RB.linearVelocity = linearVelocity;
-        RB.angularVelocity = angularVelocity;
-        HandleFlip(linearVelocity);
+        RB.linearVelocity = velocity;
     }
 
-    public void HandleFlip(Vector3 velocity)
+    public void HandleOrientation(Vector3 moveDirection)
     {
-        if (Mathf.Abs(velocity.x) < Data.MovementThreshold)
+        Quaternion targetRotation = transform.rotation;
+
+        if (currentTarget != null)
         {
-            return;
+            Vector3 dir = (currentTarget.position - transform.position).normalized;
+            dir.y = 0.0f;  // prevent vertical movement
+            if (dir != Vector3.zero)
+            {
+                targetRotation = Quaternion.LookRotation(dir);
+            }
+        }
+        else if (moveDirection.sqrMagnitude > Data.MovementThreshold)
+        {
+            targetRotation = Quaternion.LookRotation(moveDirection);
         }
 
-        if (IsFacingRight && velocity.x < 0.0f)
-        {
-            SetRotation(180.0f);
-            IsFacingRight = false;
-        }
-        else if (!IsFacingRight && velocity.x > 0.0f)
-        {
-            SetRotation(0.0f);
-            IsFacingRight = true;
-        }
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.fixedDeltaTime * Data.TurnSpeed);
     }
 
-    public void SetRotation(float yAngle)
+    public void SetRotation(Quaternion rotation)
     {
-        transform.rotation = Quaternion.Euler(0.0f, yAngle, 0.0f);
+        transform.rotation = rotation;
     }
 
     #endregion

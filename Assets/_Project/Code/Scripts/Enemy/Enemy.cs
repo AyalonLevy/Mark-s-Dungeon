@@ -23,20 +23,6 @@ public class Enemy : Entity
         base.Update();
 
         StateMachine.CurrentState.FrameUpdate();
-
-        if (target != null)
-        {
-            float directionToTarget = target.position.x - transform.position.x;
-
-            if (directionToTarget > 0.1f)
-            {
-                SetRotation(0.0f);
-            }
-            else if (directionToTarget < -0.1f)
-            {
-                SetRotation(180.0f);
-            }
-        }
     }
 
     private void FixedUpdate()
