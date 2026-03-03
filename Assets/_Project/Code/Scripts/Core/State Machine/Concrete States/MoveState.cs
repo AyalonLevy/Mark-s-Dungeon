@@ -9,6 +9,8 @@ public class MoveState : EntityState
     public override void EnterState()
     {
         base.EnterState();
+
+        entity.SetRigActive(false);
     }
 
     public override void ExitState()
@@ -35,11 +37,13 @@ public class MoveState : EntityState
 
         float speed = isSprinting ? entity.Data.SprintSpeed : entity.Data.WalkSpeed;
 
-        Vector3 moveDirection = new(rawDirection.x, 0.0f, rawDirection.y);
+        Vector3 moveVelocity = new(rawDirection.x * speed, 0.0f, rawDirection.y * speed);
 
-        entity.Move(moveDirection * speed, Vector3.zero);
 
-        if (isSprinting && moveDirection.sqrMagnitude > entity.Data.MovementThreshold)
+        entity.Move(moveVelocity, Vector3.zero);
+        entity.UpdateVisualSpeed(moveVelocity.magnitude);
+
+        if (isSprinting && moveVelocity.sqrMagnitude > entity.Data.MovementThreshold)
         {
             entity.CurrentStamina = Mathf.Max(0, entity.CurrentStamina - (entity.Data.StaminaDrainRate * Time.fixedDeltaTime));
         }

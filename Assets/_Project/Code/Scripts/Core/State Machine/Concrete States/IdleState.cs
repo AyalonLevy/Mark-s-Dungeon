@@ -11,6 +11,8 @@ public class IdleState : EntityState
     {
         base.EnterState();
 
+        entity.SetRigActive(false);
+        entity.UpdateVisualSpeed(0f);
         entity.Move(Vector3.zero, Vector3.zero);
     }
 

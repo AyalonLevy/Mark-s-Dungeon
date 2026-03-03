@@ -19,8 +19,10 @@ public class Player : Entity
         StateMachine.Initialize(IdleState);
     }
 
-    private void Update()
+    protected override void Update()
     {
+        base.Update();
+
         StateMachine.CurrentState.FrameUpdate();
     }
 
@@ -33,6 +35,8 @@ public class Player : Entity
 
     protected override void OnDeath()
     {
+        PlayDeathVisuals();
+
         //TODO: Trigger gameover
         Debug.Log("I died! (player in case you forgot....)");
     }
@@ -41,7 +45,7 @@ public class Player : Entity
 
     #region Input Implementation
 
-    public override Vector2 GetMoveInput() => inputReader.movement;
+    public override Vector2 GetMoveInput() => inputReader.Movement;
 
     public override bool IsAttacking() => inputReader.IsAttacking;
 

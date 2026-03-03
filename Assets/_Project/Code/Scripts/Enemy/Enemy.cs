@@ -18,8 +18,10 @@ public class Enemy : Entity
         StateMachine.Initialize(IdleState);
     }
 
-    private void Update()
+    protected override void Update()
     {
+        base.Update();
+
         StateMachine.CurrentState.FrameUpdate();
 
         if (target != null)

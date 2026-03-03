@@ -10,7 +10,7 @@ public class InputReader : MonoBehaviour
     private InputAction m_interactAction;
     private InputAction m_sprintAction;
 
-    public Vector2 movement { get; private set; }
+    public Vector2 Movement { get; private set; }
     public bool IsAttacking { get; private set; }
     public bool IsInteracting { get; private set; }
     public bool IsSprinting { get; private set; }
@@ -26,10 +26,9 @@ public class InputReader : MonoBehaviour
         m_sprintAction = InputAction.FindAction("Sprint");
     }
 
-
     void Update()
     {
-        movement = m_moveAction.ReadValue<Vector2>();
+        Movement = m_moveAction.ReadValue<Vector2>();
         IsSprinting = m_sprintAction.IsPressed();
         IsAttacking = m_attackjAction.WasPressedThisFrame();
         IsInteracting = m_interactAction.WasPressedThisFrame();

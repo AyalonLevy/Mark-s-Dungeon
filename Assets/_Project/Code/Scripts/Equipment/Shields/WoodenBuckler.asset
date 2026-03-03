@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8aee5ee8f6416154e9b958506a15683e, type: 3}
+  m_Name: WoodenBuckler
+  m_EditorClassIdentifier: Assembly-CSharp::ShieldData
+  EquipmentName: Wooden Buckler
+  EquipmentType: 1
+  ModelPrefab: {fileID: 4984113797664347376, guid: cc54ec6e31b4f39439140a72ba5639a8, type: 3}
+  Icon: {fileID: 21300000, guid: bad3cf2ae2f889a4fb12d9b4a36c44b0, type: 3}
+  Durability: 30
+  Value: 5
+  Armor: 5

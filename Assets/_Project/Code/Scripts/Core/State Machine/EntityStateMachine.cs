@@ -10,6 +10,11 @@ public class EntityStateMachine
 
     public void ChangeState(EntityState newState)
     {
+        if (CurrentState == newState)
+        {
+            return;
+        }
+
         CurrentState.ExitState();
         CurrentState = newState;
         CurrentState.EnterState();

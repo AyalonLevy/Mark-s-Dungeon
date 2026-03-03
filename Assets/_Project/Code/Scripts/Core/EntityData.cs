@@ -26,11 +26,19 @@ public class EntityData : ScriptableObject
     [Header("Combat Settings")]
     public float AttackDamage = 10.0f;
     public float AttackCooldown = 0.5f;
+    public LayerMask EnemyLayer;
+    public float DetectionRange = 10.0f;
 
     [Header("Skill Settings")]
     public float MaxMana = 100.0f;
     [Tooltip("Amount of MP regenerated per second when not in combat")]
     public float ManaRecoveryRate = 10.0f;
+
+    [Header("Optional Equipment Settings")]
+    [Tooltip("Leave empty if this entity doesn't use a held weapon.")]
+    public WeaponData StartingWeapon;
+    [Tooltip("Leave empty if this entity doesn't use a shield.")]
+    public ShieldData StartingShield;
 
     //TODO: In the future add skill selection - each skill will be a SO with type/damage/range/cooldown
 }
