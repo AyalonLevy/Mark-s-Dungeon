@@ -2,8 +2,6 @@ using UnityEngine;
 
 public class Enemy : Entity
 {
-    [Header("AI Target")]
-    [SerializeField] protected Transform target;
     protected override void Awake()
     {
         base.Awake();
@@ -34,7 +32,8 @@ public class Enemy : Entity
 
     protected override void OnDeath()
     {
-        //TODO: Trigger gameover
+        PlayDeathVisuals();
+
         Debug.Log("Alas I died! (enmy/companion in case you forgot....)");
     }
 
@@ -44,16 +43,20 @@ public class Enemy : Entity
 
     public override Vector2 GetMoveInput()
     {
-        if (target == null)
+        if (currentTarget == null)
         {
             return Vector2.zero;
         }
 
-        float distance = Vector3.Distance(transform.position, target.position);
+        Vector3 dirToTarget = (currentTarget.position - transform.position);
 
-        if (distance <= Data.AggroRange && distance > Data.AttackRange)
+        float distSqr = dirToTarget.sqrMagnitude;
+        float aggroRangeSqr = Data.AggroRange * Data.AggroRange;
+        float attackRangeSqr = Data.AttackRange * Data.AttackRange;
+
+        if (distSqr <= aggroRangeSqr && distSqr > attackRangeSqr)
         {
-            Vector3 direction = (target.position - transform.position).normalized;
+            Vector3 direction = dirToTarget.normalized;
             return new(direction.x, direction.z);
         }
 
@@ -62,14 +65,15 @@ public class Enemy : Entity
 
     public override bool IsAttacking()
     {
-        if (target == null)
+        if (currentTarget == null)
         {
             return false;
         }
 
-        float distance = Vector3.Distance(transform.position, target.position);
+        float distSqr = (currentTarget.position - transform.position).sqrMagnitude;
+        float attackRangeSqr = Data.AttackRange * Data.AttackRange;
 
-        return distance <= Data.AttackRange;
+        return distSqr <= attackRangeSqr && CanAttack();
     }
 
     public override bool IsSprinting()
@@ -85,6 +89,10 @@ public class Enemy : Entity
     private void OnDrawGizmosSelected()
     {
         if (Data == null) return;
+
+        // Visualizing the search "Pulse" range
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(transform.position, Data.DetectionRange);
 
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, Data.AggroRange);

@@ -4,7 +4,7 @@ using static UnityEngine.GraphicsBuffer;
 public class AttackState : EntityState
 {
     private bool _isAnimationFinished;
-    private MeleeWeapon _currentWeapon;
+    private Weapon _currentWeapon;
 
     public AttackState(Entity entity, EntityStateMachine stateMachine) : base(entity, stateMachine)
     {
@@ -13,17 +13,17 @@ public class AttackState : EntityState
     public override void EnterState()
     {
         base.EnterState();
+        entity.ResetAttackCooldown();
 
         entity.FadeLayerWeight(1, 1.0f, 0.0f);
 
         entity.SetRigActive(false);
 
         _isAnimationFinished = false;
-        _currentWeapon = entity.WeaponSocket.GetComponentInChildren<MeleeWeapon>();
+        _currentWeapon = entity.GetCurrentWeapon();
 
         entity.ResetAttackTrigger();
 
-        //TODO: Trigger the animation
         entity.PlayAttack();
     }
 
@@ -65,8 +65,8 @@ public class AttackState : EntityState
 
         if (triggerType == Entity.AnimationTriggerType.HitImpact)
         {
-            _currentWeapon.Initialize(entity.Data.AttackDamage, entity.Data.EnemyLayer);
             _currentWeapon.SetActiveState(true);
+            _currentWeapon.PerformAttack();
         }
 
         if (triggerType == Entity.AnimationTriggerType.EndOfAttack)

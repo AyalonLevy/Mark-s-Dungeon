@@ -15,23 +15,23 @@ MonoBehaviour:
   MaxHealth: 50
   HealthRegenerationRate: 2
   MovementThreshold: 0.01
+  WalkSpeed: 1
+  SprintSpeed: 3
   TurnSpeed: 10
-  WalkSpeed: 3
-  SprintSpeed: 5
   MaxStamina: 100
   StaminaDrainRate: 0
   StaminaRecoveryRate: 0
-  AggroRange: 10
-  AttackRange: 3
+  AggroRange: 2
+  AttackRange: 0.5
   AttackDamage: 5
   AttackCooldown: 1
-  DetectionRange: 10
+  DetectionRange: 3
   EnemyLayer:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 512
   ObstacleLayer:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 320
   MaxMana: 100
   ManaRecoveryRate: 10
   StartingWeapon: {fileID: 0}

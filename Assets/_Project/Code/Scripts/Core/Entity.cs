@@ -1,35 +1,48 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
-using System.Collections;
-using UnityEditor.Search;
 
 public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
 {
     public EntityData Data;
-    protected Animator anim;
 
-    private Coroutine _weighttCoroutine;
+    private Coroutine _weightCoroutine;
+
+    protected Animator anim;
+    protected Transform currentTarget;
 
     [Header("Sockets")]
     public Transform WeaponSocket;
     public Transform ShieldSocket;
 
-    [Header("Combat Awereness")]
-    protected Transform currentTarget;
-
     [Header("Sensing Settings")]
     [SerializeField] private float searchInterval = 0.2f;
     private float _searchTimer;
+    private readonly float EyeHeight = 0.5f;
+
+    [Header("Regeneration Settings")]
+    [SerializeField] private float regenerationInterval = 1.0f;
+    [Tooltip("Time before regeneration kicks in")]
+    [SerializeField] private float regenerationDelay = 2.0f;
+    private Coroutine _regenCoroutine;
+
+    private bool _inCombat = false;
 
     public float MaxHealth { get; set; }
     private float _currentHealth;
     public float CurrentHealth
     {
         get => _currentHealth;
-        set => _currentHealth = Mathf.Clamp(value, 0.0f, MaxHealth); 
+        set => _currentHealth = Mathf.Clamp(value, 0.0f, MaxHealth);
     }
+
+    //TODO: Create an interface for casters?
     public float CurrentMana { get; set; }
+
     public float CurrentStamina { get; set; }
+
+    private float _lastAttackTime;
+    private Weapon _currentWeapon;
 
     public Rigidbody RB { get; set; }
     public bool IsFacingRight { get; set; } = true;  // based on the default gameobject facing direction
@@ -37,19 +50,17 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
     private RigBuilder _rigBuilder;
 
     #region StateMachine Variables
-
     public EntityStateMachine StateMachine { get; protected set; }
     public IdleState IdleState { get; protected set; }
     public MoveState MoveState { get; protected set; }
     public AttackState AttackState { get; protected set; }
-
     #endregion
 
     protected virtual void Awake()
     {
         RB = GetComponent<Rigidbody>();
         RB.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;  // Prevent entities from face palming while trying to walk, they are better than that
-        
+
         anim = GetComponentInChildren<Animator>();
         _rigBuilder = GetComponentInChildren<RigBuilder>();
 
@@ -71,8 +82,6 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
             SearchForTarget();
             _searchTimer = searchInterval;
         }
-
-        anim.SetBool("InCombat", currentTarget != null);
     }
 
     public void SetRigActive(bool active)
@@ -82,24 +91,35 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
             _rigBuilder.enabled = active;
         }
     }
+    public abstract Vector2 GetMoveInput();
+    public abstract bool IsAttacking();
+    public abstract bool IsSprinting();
 
+    #region Combat
     private void SearchForTarget()
     {
         Collider[] potentialTargets = Physics.OverlapSphere(transform.position, Data.DetectionRange, Data.EnemyLayer);
-        
+
         if (potentialTargets.Length == 0)
         {
             currentTarget = null;
             return;
         }
- 
+
         currentTarget = GetClosestTarget(potentialTargets);
+
+        if (currentTarget != null)
+        {
+            EnterCombat();
+        }
     }
 
     public Transform GetClosestTarget(Collider[] potentialTargets)
     {
         float closestDistanceSqr = Mathf.Infinity;
         Transform bestTarget = null;
+
+        Vector3 currentPos = transform.position + (Vector3.up * EyeHeight);
 
         foreach (var col in potentialTargets)
         {
@@ -124,10 +144,16 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
             if (distSqr < closestDistanceSqr)
             {
                 // You shouldn't see through walls...
-                Vector3 dirToTarget = diff.normalized;
+                Vector3 targetCenter = col.bounds.center;
+                Vector3 dirToTarget = (targetCenter - currentPos).normalized;
                 float actualDist = Mathf.Sqrt(distSqr);
 
-                if (!Physics.Raycast(transform.position, dirToTarget, actualDist, Data.ObstacleLayer))
+                // For debuging detection - shoots lasers to potential targets
+                //Vector3 debugStart = currentPos + Vector3.up * EyeHeight;
+                //Vector3 debugDir = (col.transform.position - currentPos).normalized;
+                //Debug.DrawRay(debugStart, debugDir * Data.DetectionRange, Color.magenta);
+
+                if (!Physics.Raycast(currentPos, dirToTarget, actualDist, Data.ObstacleLayer))
                 {
                     closestDistanceSqr = distSqr;
                     bestTarget = col.transform;
@@ -138,12 +164,77 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
         return bestTarget;
     }
 
-    public abstract Vector2 GetMoveInput();
-    public abstract bool IsAttacking();
-    public abstract bool IsSprinting();
+    public bool CanAttack()
+    {
+        return Time.time >= _lastAttackTime + Data.AttackCooldown;
+    }
+
+    public Weapon GetCurrentWeapon()
+    {
+        return _currentWeapon;
+    }
+
+    public void ResetAttackCooldown()
+    {
+        _lastAttackTime = Time.time;
+    }
+
+    public void EnterCombat()
+    {
+        _inCombat = true;
+
+        if (_regenCoroutine != null)
+        {
+            StopCoroutine(_regenCoroutine);
+            _regenCoroutine = null;
+        }
+    }
+
+    public void ExitCombat()
+    {
+        _inCombat = false;
+        if (_regenCoroutine == null && gameObject.activeInHierarchy)
+        {
+            _regenCoroutine = StartCoroutine(RegenerationHeartbeat());
+        }
+    }
+    #endregion
+
+    #region Regeneration
+
+    private IEnumerator RegenerationHeartbeat()
+    {
+        yield return new WaitForSeconds(regenerationDelay);
+
+        while (!_inCombat)
+        {
+            Regeneration();
+
+            yield return new WaitForSeconds(regenerationInterval);
+
+            if (CurrentHealth >= MaxHealth && CurrentMana >= Data.MaxMana && CurrentStamina >= Data.MaxStamina)
+            {
+                _regenCoroutine = null;
+                yield break;
+            }
+        }
+        _regenCoroutine = null;
+    }
+
+    public void Regeneration()
+    {
+        if (!IsSprinting())
+        {
+            CurrentStamina = Mathf.Min(CurrentStamina + Data.StaminaRecoveryRate, Data.MaxStamina);
+        }
+
+        CurrentHealth += Data.HealthRegenerationRate;
+        CurrentMana = Mathf.Min(CurrentMana + Data.ManaRecoveryRate, Data.MaxMana);
+    }
+
+    #endregion
 
     #region Equipment SetUp
-
     private void InitializeEquipment()
     {
         if (Data.StartingWeapon != null && WeaponSocket != null)
@@ -155,6 +246,7 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
         {
             EquipItem(Data.StartingShield, ShieldSocket);
         }
+        RegisterEquipment();
     }
 
     private void EquipItem(EquipmentData data, Transform socket)
@@ -175,13 +267,45 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
         item.transform.localRotation = Quaternion.identity;
     }
 
+    private void RegisterEquipment()
+    {
+        RegisterWeapon();
+
+        RegisterShield();
+    }
+
+    private void RegisterWeapon()
+    {
+        _currentWeapon = WeaponSocket.GetComponentInChildren<Weapon>();
+        Weapon arm = WeaponSocket.GetComponentInParent<Weapon>();
+        arm.DisableWeapon();
+
+        if (_currentWeapon == null)
+        {
+            _currentWeapon = WeaponSocket.GetComponentInParent<Weapon>();
+            arm.EnableWeapon();
+        }
+
+        _currentWeapon.Initialize(Data.AttackDamage, Data.EnemyLayer);
+    }
+
+    private void RegisterShield()
+    {
+        //TODO: handle shields - will reduce the amount of damage by the armor value (It can also be procentage of damage reduction)
+    }
+
     #endregion
 
     #region Health / Die Functions
 
     public void Damage(float damageAmount)
     {
+        EnterCombat();
+
         CurrentHealth -= damageAmount;
+        Debug.Log($"I got hit! I have {CurrentHealth} left");
+
+        anim.SetTrigger("Hurt");
 
         if (CurrentHealth <= 0.0f)
         {
@@ -192,10 +316,13 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
     }
     public void Die()
     {
+        Debug.Log("I die!");
+
         if (TryGetComponent<Rigidbody>(out Rigidbody rb))
         {
             rb.isKinematic = true;
-            rb.linearVelocity = Vector3.zero;
+            currentTarget = null;
+            Move(Vector3.zero);
         }
 
         if (TryGetComponent<Collider>(out Collider collider))
@@ -246,7 +373,6 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
     #endregion
 
     #region Animation Triggers
-
     private void AnimationTriggerEvent(AnimationTriggerType triggerType)
     {
         StateMachine.CurrentState.AnimationTriggerEvent(triggerType);
@@ -261,12 +387,12 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
 
     public void FadeLayerWeight(int layerIndex, float targetWeight, float duration)
     {
-        if (_weighttCoroutine != null)
+        if (_weightCoroutine != null)
         {
-            StopCoroutine(_weighttCoroutine);
+            StopCoroutine(_weightCoroutine);
         }
 
-        _weighttCoroutine = StartCoroutine(AnimateLayerWeight(layerIndex, targetWeight, duration));
+        _weightCoroutine = StartCoroutine(AnimateLayerWeight(layerIndex, targetWeight, duration));
     }
 
     private IEnumerator AnimateLayerWeight(int layerIndex, float targetWeight, float duration)
@@ -289,11 +415,12 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
         }
 
         anim.SetLayerWeight(layerIndex, targetWeight);
-        _weighttCoroutine = null;
+        _weightCoroutine = null;
     }
 
     public void SetLayerWeight(int layerIndex, float weight)
     {
+        // For instant change
         anim.SetLayerWeight(layerIndex, weight);
     }
 
@@ -317,12 +444,15 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
         anim.SetTrigger("Block");
     }
 
+    public void ResetBlockTrigger()
+    {
+        anim.ResetTrigger("Block");
+    }
+
     public void PlayDeathVisuals()
     {
-        anim.SetBool("InCombat", false);
         anim.SetBool("IsDead", true);
         anim.SetTrigger("Die");
     }
-
     #endregion
 }

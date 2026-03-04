@@ -11,9 +11,9 @@ public class EntityData : ScriptableObject
     [Header("Movement Settings")]
     [Tooltip("The threshold for movement input (squared)")]
     [HideInInspector] public float MovementThreshold = 0.01f;
-    public float TurnSpeed = 10.0f;
     public float WalkSpeed = 5.0f;
     public float SprintSpeed = 8.0f;
+    public float TurnSpeed = 10.0f;
     public float MaxStamina = 100.0f;
     [Tooltip("Amount of Stamina used per second when sprinting")]
     public float StaminaDrainRate = 10.0f;
