@@ -21,6 +21,8 @@ public class Gate : MonoBehaviour, IInteractale
 
         //TODO: Add sound effect
         StartCoroutine(OpenGate());
+        GetComponentInChildren<InteractableHighlighter>().ToggleHighlight(false);
+        GetComponentInChildren<InteractableHighlighter>().DisableHighlight();
     }
 
     private IEnumerator OpenGate()

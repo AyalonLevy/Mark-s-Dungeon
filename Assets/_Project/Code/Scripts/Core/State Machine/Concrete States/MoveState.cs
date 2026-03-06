@@ -22,6 +22,11 @@ public class MoveState : EntityState
     {
         base.FrameUpdate();
 
+        if (entity.IsDead())
+        {
+            stateMachine.ChangeState(entity.IdleState);
+        }
+
         if (entity.IsAttacking())
         {
             stateMachine.ChangeState(entity.AttackState);

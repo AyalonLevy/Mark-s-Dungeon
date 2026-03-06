@@ -27,7 +27,7 @@ public class Player : Entity
 
         StateMachine.CurrentState.FrameUpdate();
 
-        if (inputReader.IsInteracting)
+        if (inputReader.IsInteracting &&!_inCombat)
         {
             TryInteract();
         }
@@ -42,8 +42,6 @@ public class Player : Entity
 
     protected override void OnDeath()
     {
-        PlayDeathVisuals();
-
         //TODO: Trigger gameover
         Debug.Log("I died! (player in case you forgot....)");
     }

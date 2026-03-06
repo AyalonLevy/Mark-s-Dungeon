@@ -38,7 +38,7 @@ public class AttackState : EntityState
     {
         base.FrameUpdate();
 
-        if (_isAnimationFinished)
+        if (_isAnimationFinished || entity.IsDead())
         {
             stateMachine.ChangeState(entity.IdleState);
         }
