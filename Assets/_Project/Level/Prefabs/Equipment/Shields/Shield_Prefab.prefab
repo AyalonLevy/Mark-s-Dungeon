@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 3353631613944123168}
   - component: {fileID: 6635910818361097565}
   - component: {fileID: 172088905988795630}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Shield_Prefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -133,6 +133,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 247aa090691b16349bf2ebef35afae49, type: 3}
       propertyPath: m_Name
       value: Visual
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 247aa090691b16349bf2ebef35afae49, type: 3}
+      propertyPath: m_Layer
+      value: 11
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

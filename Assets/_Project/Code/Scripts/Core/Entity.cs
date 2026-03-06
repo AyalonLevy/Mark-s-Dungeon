@@ -26,7 +26,15 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
     [SerializeField] private float regenerationDelay = 2.0f;
     private Coroutine _regenCoroutine;
 
-    private bool _inCombat = false;
+    protected bool _inCombat = false;
+    protected bool _isDead = false;
+
+    [Header("Death Arrangements")]
+    [Tooltip("Time before the body goes to a better place")]
+    [SerializeField] private Material _ghostMaterial;
+    [SerializeField] private float restInPeace = 2.0f;
+    [SerializeField] private float timeToAscend = 1.5f;
+    [SerializeField] private float ascensionHeight = 1.0f;
 
     public float MaxHealth { get; set; }
     private float _currentHealth;
@@ -82,6 +90,14 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
             SearchForTarget();
             _searchTimer = searchInterval;
         }
+
+        if (_inCombat)
+        {
+            if (currentTarget == null || !IsTargetAlive(currentTarget))
+            {
+                ResetCombatState();
+            }
+        }
     }
 
     public void SetRigActive(bool active)
@@ -100,68 +116,80 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
     {
         Collider[] potentialTargets = Physics.OverlapSphere(transform.position, Data.DetectionRange, Data.EnemyLayer);
 
-        if (potentialTargets.Length == 0)
-        {
-            currentTarget = null;
-            return;
-        }
+        Transform bestTarger = GetBestValidTarget(potentialTargets);
 
-        currentTarget = GetClosestTarget(potentialTargets);
-
-        if (currentTarget != null)
+        if (bestTarger != null)
         {
+            currentTarget = bestTarger;
             EnterCombat();
+        }
+        else if (_inCombat)
+        {
+            ResetCombatState();
         }
     }
 
-    public Transform GetClosestTarget(Collider[] potentialTargets)
+    private Transform GetBestValidTarget(Collider[] colliders)
     {
         float closestDistanceSqr = Mathf.Infinity;
         Transform bestTarget = null;
+        Vector3 eyePos = transform.position + (Vector3.up * EyeHeight);
 
-        Vector3 currentPos = transform.position + (Vector3.up * EyeHeight);
-
-        foreach (var col in potentialTargets)
+        foreach (var collider in colliders)
         {
-            // Don't target self, self is good
-            if (col.transform == transform)
+            if (collider.transform == transform)
             {
                 continue;
             }
 
-            // Don't target the dead, let them rest in peace
-            if (col.TryGetComponent<IDamagable>(out var damagable))
+            if (IsValidTarget(collider, eyePos, out float distSqr))
             {
-                if (col.TryGetComponent<Entity>(out var e) && e.CurrentHealth <= 0)
-                {
-                    continue;
-                }
-            }
-
-            Vector3 diff = col.transform.position - transform.position;
-            float distSqr = diff.sqrMagnitude;
-
-            if (distSqr < closestDistanceSqr)
-            {
-                // You shouldn't see through walls...
-                Vector3 targetCenter = col.bounds.center;
-                Vector3 dirToTarget = (targetCenter - currentPos).normalized;
-                float actualDist = Mathf.Sqrt(distSqr);
-
-                // For debuging detection - shoots lasers to potential targets
-                //Vector3 debugStart = currentPos + Vector3.up * EyeHeight;
-                //Vector3 debugDir = (col.transform.position - currentPos).normalized;
-                //Debug.DrawRay(debugStart, debugDir * Data.DetectionRange, Color.magenta);
-
-                if (!Physics.Raycast(currentPos, dirToTarget, actualDist, Data.ObstacleLayer))
+                if (distSqr < closestDistanceSqr)
                 {
                     closestDistanceSqr = distSqr;
-                    bestTarget = col.transform;
+                    bestTarget = collider.transform;
                 }
             }
         }
 
         return bestTarget;
+    }
+
+    private bool IsValidTarget(Collider col, Vector3 eyePos, out float distSqr)
+    {
+        distSqr = (col.transform.position - transform.position).sqrMagnitude;
+
+        if (col.TryGetComponent<Entity>(out var entity) && entity.IsDead())
+        {
+            return false;
+        }
+
+        Vector3 targetCenter = col.bounds.center;
+        Vector3 dir = (targetCenter - eyePos).normalized;
+        float dist = Mathf.Sqrt(distSqr);
+
+        if (Physics.Raycast(eyePos, dir, dist, Data.ObstacleLayer))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool IsTargetAlive(Transform target)
+    {
+        if (target.TryGetComponent<Entity>(out var e))
+        {
+            return e.CurrentHealth > 0;
+        }
+        return false;
+    }
+
+    private void ResetCombatState()
+    {
+        currentTarget = null;
+        _inCombat = false;
+        ExitCombat();
     }
 
     public bool CanAttack()
@@ -192,7 +220,6 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
 
     public void ExitCombat()
     {
-        _inCombat = false;
         if (_regenCoroutine == null && gameObject.activeInHierarchy)
         {
             _regenCoroutine = StartCoroutine(RegenerationHeartbeat());
@@ -206,7 +233,7 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
     {
         yield return new WaitForSeconds(regenerationDelay);
 
-        while (!_inCombat)
+        while (!_inCombat && CurrentHealth > 0.0f)
         {
             Regeneration();
 
@@ -310,19 +337,20 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
         if (CurrentHealth <= 0.0f)
         {
             Die();
-
-            //Destroy(gameObject);
         }
     }
+
     public void Die()
     {
         Debug.Log("I die!");
+        _inCombat = false;
+        _isDead = true;
+        currentTarget = null;
 
         if (TryGetComponent<Rigidbody>(out Rigidbody rb))
         {
-            rb.isKinematic = true;
-            currentTarget = null;
             Move(Vector3.zero);
+            rb.isKinematic = true;
         }
 
         if (TryGetComponent<Collider>(out Collider collider))
@@ -330,10 +358,58 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
             collider.enabled = false;
         }
 
+        PlayDeathVisuals();
+        StartCoroutine(GetRidOfTheBody());
+
         OnDeath();
     }
 
     protected abstract void OnDeath();
+
+    protected IEnumerator GetRidOfTheBody()
+    {
+        // First step - waits for X seconds
+        yield return new WaitForSeconds(restInPeace);
+
+        // Second step - the body rises slowly to the air and becomes invisible and afther Y seconds is destroyed
+        float elapsed = 0.0f;
+        Vector3 startPos = transform.position;
+        Vector3 endPos = startPos + Vector3.up * ascensionHeight;
+
+        MeshRenderer[] renderers = GetComponentsInChildren<MeshRenderer>();
+        Material[] ghostInstances = new Material[renderers.Length];
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            ghostInstances[i] = Instantiate(_ghostMaterial);
+
+            Material[] mats = renderers[i].materials;
+            System.Array.Resize(ref mats, mats.Length + 1);
+            mats[^1] = ghostInstances[i];
+            renderers[i].materials = mats;            
+        }
+
+        while (elapsed < timeToAscend)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / timeToAscend;
+
+            transform.position = Vector3.Lerp(startPos, endPos, t);
+
+            foreach (var mat in ghostInstances)
+            {
+                Color c = mat.GetColor("_Color"); ;
+                c.a = Mathf.Lerp(1.0f, 0.0f, t);
+                mat.SetColor("_Color", c);
+            }
+
+            yield return null;
+        }
+
+        Destroy(gameObject);
+    }
+
+    public bool IsDead() => _isDead;
 
     #endregion
 

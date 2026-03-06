@@ -28,8 +28,11 @@ public class Chest : MonoBehaviour, IInteractale
         _isOpen = true;
         Debug.Log($"Chest Opened! you got {_coins} gold coins! Don't spend it all in one place!");
 
+
         //TODO: Add sound effect
         StartCoroutine(OpenLid());
+        GetComponentInChildren<InteractableHighlighter>().ToggleHighlight(false);
+        GetComponentInChildren<InteractableHighlighter>().DisableHighlight();
     }
 
     private IEnumerator OpenLid()

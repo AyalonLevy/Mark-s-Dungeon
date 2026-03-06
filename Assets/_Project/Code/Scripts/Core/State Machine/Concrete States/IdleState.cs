@@ -25,6 +25,11 @@ public class IdleState : EntityState
     {
         base.FrameUpdate();
 
+        if (entity.IsDead())
+        {
+            return;
+        }
+
         if (entity.GetMoveInput().sqrMagnitude > entity.Data.MovementThreshold)
         {
             stateMachine.ChangeState(entity.MoveState);

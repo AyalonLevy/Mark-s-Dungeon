@@ -32,8 +32,6 @@ public class Enemy : Entity
 
     protected override void OnDeath()
     {
-        PlayDeathVisuals();
-
         Debug.Log("Alas I died! (enmy/companion in case you forgot....)");
     }
 
@@ -43,7 +41,7 @@ public class Enemy : Entity
 
     public override Vector2 GetMoveInput()
     {
-        if (currentTarget == null)
+        if (currentTarget == null || _isDead)
         {
             return Vector2.zero;
         }
