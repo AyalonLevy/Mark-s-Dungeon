@@ -5,6 +5,11 @@ public class Player : Entity
     [Header("Dependencies")]
     [SerializeField] private InputReader inputReader;
 
+    [Header("Interaction Settings")]
+    [SerializeField] private LayerMask interactableLayer;
+    private static Collider[] _interactBuffer = new Collider[8];
+
+
     private readonly float _interactRadius = 1.5f;
 
     protected override void Awake()
@@ -43,6 +48,8 @@ public class Player : Entity
     protected override void OnDeath()
     {
         //TODO: Trigger gameover
+        GameManager.Instance.OnPlayerDeath();
+
         Debug.Log("I died! (player in case you forgot....)");
     }
 
@@ -52,11 +59,11 @@ public class Player : Entity
     {
         Vector3 searchPoint = transform.position + (Vector3.up * 0.5f) + (transform.forward * 0.5f);
 
-        Collider[] items = Physics.OverlapSphere(searchPoint, _interactRadius);
+        int numFound = Physics.OverlapSphereNonAlloc(searchPoint, _interactRadius, _interactBuffer, interactableLayer);
 
-        foreach (var item in items)
+        for (int i = 0; i < numFound; i++)
         {
-            if (item.TryGetComponent<IInteractale>(out var interactable))
+            if (_interactBuffer[i].TryGetComponent<IInteractale>(out var interactable))
             {
                 interactable.Interact(this);
                 break;

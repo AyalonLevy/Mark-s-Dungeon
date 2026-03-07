@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
@@ -19,6 +20,9 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
     [SerializeField] private float searchInterval = 0.2f;
     private float _searchTimer;
     private readonly float EyeHeight = 0.5f;
+    [Tooltip("The number of enemies the player can detect as potential targets at the same time")]
+    private static readonly int MaxDetectionBuffer = 32;
+    private readonly Collider[] _targetsBuffer = new Collider[MaxDetectionBuffer];
 
     [Header("Regeneration Settings")]
     [SerializeField] private float regenerationInterval = 1.0f;
@@ -35,6 +39,10 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
     [SerializeField] private float restInPeace = 2.0f;
     [SerializeField] private float timeToAscend = 1.5f;
     [SerializeField] private float ascensionHeight = 1.0f;
+    public static event Action<Entity> OnAnyEntityDeath;
+
+    [Header("Objective Settings")]
+    public bool isMarked = false;
 
     public float MaxHealth { get; set; }
     private float _currentHealth;
@@ -114,13 +122,23 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
     #region Combat
     private void SearchForTarget()
     {
-        Collider[] potentialTargets = Physics.OverlapSphere(transform.position, Data.DetectionRange, Data.EnemyLayer);
+        int numFound= Physics.OverlapSphereNonAlloc(transform.position, Data.DetectionRange, _targetsBuffer, Data.EnemyLayer);
 
-        Transform bestTarger = GetBestValidTarget(potentialTargets);
-
-        if (bestTarger != null)
+        if (numFound == 0)
         {
-            currentTarget = bestTarger;
+            currentTarget = null;
+            if (_inCombat)
+            { 
+                ResetCombatState(); 
+            }
+
+            return;
+        }
+
+        currentTarget = GetBestValidTarget(numFound);
+
+        if (currentTarget != null)
+        {
             EnterCombat();
         }
         else if (_inCombat)
@@ -129,25 +147,26 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
         }
     }
 
-    private Transform GetBestValidTarget(Collider[] colliders)
+    private Transform GetBestValidTarget(int count)
     {
         float closestDistanceSqr = Mathf.Infinity;
         Transform bestTarget = null;
         Vector3 eyePos = transform.position + (Vector3.up * EyeHeight);
 
-        foreach (var collider in colliders)
+        for (int i = 0; i < count; i++)
         {
-            if (collider.transform == transform)
+            Collider col = _targetsBuffer[i];
+            if (col.transform == transform)
             {
                 continue;
             }
 
-            if (IsValidTarget(collider, eyePos, out float distSqr))
+            if (IsValidTarget(col, eyePos, out float distSqr))
             {
                 if (distSqr < closestDistanceSqr)
                 {
                     closestDistanceSqr = distSqr;
-                    bestTarget = collider.transform;
+                    bestTarget = col.transform;
                 }
             }
         }
@@ -158,6 +177,15 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
     private bool IsValidTarget(Collider col, Vector3 eyePos, out float distSqr)
     {
         distSqr = (col.transform.position - transform.position).sqrMagnitude;
+
+        float maxRangeSqr = Data.DetectionRange * Data.DetectionRange;
+
+        // To reduce the CPU usage with calculating the Square unnecessarily
+        if (distSqr > maxRangeSqr)
+        {
+            return false;
+        }
+
 
         if (col.TryGetComponent<Entity>(out var entity) && entity.IsDead())
         {
@@ -360,6 +388,8 @@ public abstract class Entity : MonoBehaviour, IDamagable, IMoveable
 
         PlayDeathVisuals();
         StartCoroutine(GetRidOfTheBody());
+
+        OnAnyEntityDeath?.Invoke(this);
 
         OnDeath();
     }

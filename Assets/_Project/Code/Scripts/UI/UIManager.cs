@@ -3,6 +3,8 @@ using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
+    public static UIManager Instance { get; private set; }
+
     [Header("Player Reference")]
     [SerializeField] private Entity _player;
 
@@ -11,6 +13,32 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Slider _mpSlider;
     [SerializeField] private Slider _staminaSlider;
     [SerializeField] private Slider _xpSlider;
+
+    [Header("Screens")]
+    [SerializeField] private GameObject _hudCanvas;
+    [SerializeField] private GameObject _gameOverScreen;
+
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+                }
+        else 
+        {
+            Destroy(gameObject);
+        }
+
+        _gameOverScreen.SetActive(false);
+        _hudCanvas.SetActive(true);
+    }
+
+    public void ShowGameOver()
+    {
+        _hudCanvas.SetActive(false);
+        _gameOverScreen.SetActive(true);
+    }
 
     private void Start()
     {
@@ -38,4 +66,6 @@ public class UIManager : MonoBehaviour
 
         //TODO: handle XP
     }
+
+    
 }
