@@ -10,11 +10,13 @@ public class PlayerInputHandler : MonoBehaviour
     private PlayerInteractionHandler _interactionHandler;
     private PlayerControls _controls;
     private Vector2 _rawInput;
+    private CombatHandler _combatHandler;
 
     private void Awake()
     {
         _moveable = GetComponent<IMoveable>();
         _interactionHandler = GetComponent<PlayerInteractionHandler>();
+        _combatHandler = GetComponent<CombatHandler>();
         _controls = new PlayerControls();
 
         // Bind Move action
@@ -61,5 +63,6 @@ public class PlayerInputHandler : MonoBehaviour
     private void OnAttackPressed()
     {
         Debug.Log("Mark attacks!");
+        _combatHandler.RequestAttack();
     }
 }

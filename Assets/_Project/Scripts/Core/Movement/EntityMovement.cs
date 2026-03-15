@@ -18,7 +18,7 @@ public class EntityMovement : MonoBehaviour, IMoveable
         get
         {
             // TODO: Define formula for speed
-            float speed = 2.0f + (_stats.Attributes.Dexterity * 0.1f);
+            float speed = 2.0f + (_stats.Dexterity.Value * 0.1f);
 
             // Add encumbrance by load of gear and inventory
             // speed *= _stats.GetEncumbranceMultiplier();  // TODO: Create this later

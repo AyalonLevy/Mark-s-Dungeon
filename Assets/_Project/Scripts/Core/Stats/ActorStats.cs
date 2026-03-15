@@ -2,31 +2,54 @@ using UnityEngine;
 
 public class ActorStats : MonoBehaviour, IDamagable, ILevelable
 {
-    [Header("Blueprints")]
+    [Header("Data Source")]
     public RaceData Race;
     public ClassData Class;
     public LevelSettings LevelSettings;
 
-    [Header("Current Progress")]
-    [SerializeField] private int _level = 1;
-    [SerializeField] private float _currentXP;
+    [Header("Attributes")]
+    public Stat Strength = new();
+    public Stat Dexterity = new();
+    public Stat Intelligence = new();
+    public Stat Vitality = new();
 
-    public int CurrentLevel => _level;
-
-    [SerializeField] private AttributeSet attributes;
-    public AttributeSet Attributes => attributes;
-
-    [Header("Runtime Vitality")]
+    [Header("Current Vitals")]
     public float CurrentHP;
     public float CurrentMP;
     public float CurrentStamina;
 
+    [Header("Current Progress")]
+    [SerializeField] private int _level = 1;
+    [SerializeField] private float _currentXP;
+    
+    // Public Getters
+    public int CurrentLevel => _level;
+    public bool IsDead() => CurrentHP <= 0.0f;
+
+
+    // Derived Vitals
+    // TODO: Define formula for Stat -> attributes
+    public float MaxHP => Race.BaseHP + (Vitality.Value * 10.0f);
+    public float MaxMP => Race.BaseMP + (Intelligence.Value * 5.0f);
+    public float MaxStamina => Race.BaseStamina + (Dexterity.Value * 2.0f);
+
+
     public float CurrentHealth => CurrentHP;
-    public float MaxHealth => attributes.MaxHP;
+    public float MaxHealth => MaxHP;
 
     private void Awake()
     {
         InitializeStats();
+    }
+
+    private void Update()
+    {
+        if (CurrentStamina < MaxStamina)
+        {
+            // TODO: Define formula
+            float regenRate = 5.0f + (Dexterity.Value * 0.5f);
+            CurrentStamina = Mathf.Min(MaxStamina, CurrentStamina + regenRate * Time.deltaTime);
+        }
     }
 
     public void InitializeStats()
@@ -37,20 +60,11 @@ public class ActorStats : MonoBehaviour, IDamagable, ILevelable
             return;
         }
 
-        // Race Stats
-        attributes.Strength = Race.BaseSTR;
-        attributes.Dexterity = Race.BaseDEX;
-        attributes.Intelligence = Race.BaseINT;
-        attributes.Vitality = Race.BaseVIT;
-
-        // Apply Class Growth
-        attributes.Strength += Mathf.RoundToInt(Class.StrGrowth * (_level - 1));
-        attributes.Dexterity += Mathf.RoundToInt(Class.DexGrowth * (_level - 1));
-        attributes.Intelligence += Mathf.RoundToInt(Class.IntGrowth * (_level - 1));
-        attributes.Vitality += Mathf.RoundToInt(Class.VitGrowth * (_level - 1));
-
-        // Calculate the derived max values
-        attributes.Recalculate(_level);
+        // Formula: RaceBase + (ClassGrowth * LevelGained)
+        Strength.BaseValue = Race.BaseSTR + Mathf.RoundToInt(Class.StrGrowth * (_level - 1));
+        Dexterity.BaseValue= Race.BaseDEX + Mathf.RoundToInt(Class.DexGrowth * (_level - 1));
+        Intelligence.BaseValue = Race.BaseINT + Mathf.RoundToInt(Class.IntGrowth * (_level - 1));
+        Vitality.BaseValue = Race.BaseVIT + Mathf.RoundToInt(Class.VitGrowth * (_level - 1));
 
         // Update stats
         MaxVitals();
@@ -67,9 +81,7 @@ public class ActorStats : MonoBehaviour, IDamagable, ILevelable
         }
     }
 
-    public void Heal(float amount) => CurrentHP = Mathf.Min(attributes.MaxHP, CurrentHP + amount);
-
-    public bool IsDead() => CurrentHP <= 0.0f;
+    public void Heal(float amount) => CurrentHP = Mathf.Min(MaxHP, CurrentHP + amount);
 
     public void AddXP(float amount)
     {
@@ -97,21 +109,21 @@ public class ActorStats : MonoBehaviour, IDamagable, ILevelable
 
         InitializeStats();
 
-        // Optional: Restore HP/MP on level up
+        // TODO: Optional - Restore HP/MP on level up
         MaxVitals();
     }
 
     private void MaxVitals()
     {
-        CurrentHP = Attributes.MaxHP;
-        CurrentMP = Attributes.MaxMP;
-        CurrentStamina = Attributes.MaxStamina;
+        CurrentHP = MaxHP;
+        CurrentMP = MaxMP;
+        CurrentStamina = MaxStamina;
     }
 
     private void Die()
     {
         Debug.Log($"{gameObject.name} has fallen!");
 
-        // TODO: Add ddeath logic and visuals
+        // TODO: Add death logic and visuals
     }
 }

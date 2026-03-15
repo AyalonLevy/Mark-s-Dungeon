@@ -34,9 +34,45 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Hotbar",
+                    "name": "HotKey1",
                     "type": "Button",
                     "id": "7c5a2c97-3b3b-4068-a6ff-d0c4af1b7eb9",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "HotKey2",
+                    "type": "Button",
+                    "id": "24bc3b5c-564c-4998-8b35-7ba0d876a14b",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "HotKey3",
+                    "type": "Button",
+                    "id": "783fc8c9-daaa-4fda-8b53-0c9649c555b7",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "HotKey4",
+                    "type": "Button",
+                    "id": "93b4e7c2-6214-459a-be5a-86a6904df8a3",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "HotKey5",
+                    "type": "Button",
+                    "id": "dc8a160d-dadb-4830-b970-ff3b22b415e5",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -214,51 +250,51 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Hotbar",
+                    "action": "HotKey1",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
                 {
                     "name": "",
-                    "id": "0648aedb-7c31-4ca9-81e4-15cd149db134",
+                    "id": "7e381308-a6a1-4020-be75-538a9c6b1aba",
                     "path": "<Keyboard>/2",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Hotbar",
+                    "action": "HotKey2",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
                 {
                     "name": "",
-                    "id": "35703104-b32f-4f03-9e1e-d90de645833f",
+                    "id": "3b5dbcb7-e964-4dcc-897f-ae9b11e3c1a7",
                     "path": "<Keyboard>/3",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Hotbar",
+                    "action": "HotKey3",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
                 {
                     "name": "",
-                    "id": "ea4d248b-0ec5-4ca7-b329-6000b79e75d7",
+                    "id": "bc09b915-7a86-40b5-8706-032195a320ad",
                     "path": "<Keyboard>/4",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Hotbar",
+                    "action": "HotKey4",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
                 {
                     "name": "",
-                    "id": "9cce97d0-ab44-49f3-90cc-8f079c1acc58",
+                    "id": "7ff88bcb-8163-4d8b-9f75-474fa1ebcd91",
                     "path": "<Keyboard>/5",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Hotbar",
+                    "action": "HotKey5",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

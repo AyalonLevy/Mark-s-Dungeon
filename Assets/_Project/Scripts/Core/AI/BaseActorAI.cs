@@ -28,4 +28,13 @@ public abstract class BaseActorAI : MonoBehaviour
     {
         UpdateAI();
     }
+
+    protected void StopMoving()
+    {
+        Moveable.Move(Vector3.zero);
+        if (Moveable.IsSprinting)
+        {
+            Moveable.IsSprinting = false;
+        }
+    }
 }
