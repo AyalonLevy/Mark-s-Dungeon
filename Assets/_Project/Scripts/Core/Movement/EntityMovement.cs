@@ -10,6 +10,7 @@ public class EntityMovement : MonoBehaviour, IMoveable
     private Rigidbody _rb;
     private NavMeshAgent _agent;
     private ActorStats _stats;
+    private InventoryManager _inventory;
 
     public bool IsSprinting { get; set; }
 
@@ -21,7 +22,10 @@ public class EntityMovement : MonoBehaviour, IMoveable
             float speed = 2.0f + (_stats.Dexterity.Value * 0.1f);
 
             // Add encumbrance by load of gear and inventory
-            // speed *= _stats.GetEncumbranceMultiplier();  // TODO: Create this later
+            if (_inventory != null)
+            {
+                speed *= _inventory.GetEncumbranceMultiplier();
+            }
 
             if (IsSprinting && _stats.CurrentStamina > 0.0f)
             {
@@ -38,6 +42,7 @@ public class EntityMovement : MonoBehaviour, IMoveable
         _rb = GetComponent<Rigidbody>();
         _agent = GetComponent<NavMeshAgent>();
         _stats = GetComponent<ActorStats>();
+        _inventory = GetComponent<InventoryManager>();
 
         // To prevent the agent from moving the actors
         if (_agent != null)

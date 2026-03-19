@@ -103,6 +103,19 @@ public class ActorStats : MonoBehaviour, IDamagable, ILevelable
         }
     }
 
+    public void UpdateMaxVitalsProportionally(System.Action statChangeAction)
+    {
+        float hpPercent = CurrentHP / MaxHP;
+        float mpPercent = CurrentMP / MaxMP;
+        float staminaPercent = CurrentStamina / MaxStamina;
+
+        statChangeAction.Invoke();
+
+        CurrentHP = MaxHP * hpPercent;
+        CurrentMP = MaxMP * mpPercent;
+        CurrentStamina = MaxStamina * staminaPercent;
+    }
+
     private void LevelUp()
     {
         Debug.Log($"{gameObject.name} reached Level {_level}!");

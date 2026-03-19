@@ -3,8 +3,8 @@ using UnityEngine;
 
 public enum AttackShape { Circle, Cone, Line }
 
-[CreateAssetMenu(fileName = "NewWeapon", menuName = "Mark's Dungeon/Data/Weapon")]
-public class WeaponData : ScriptableObject
+[CreateAssetMenu(fileName = "NewWeapon", menuName = "Mark's Dungeon/Items/Weapon")]
+public class WeaponData : EquipmentData
 {
     [Header("Stats")]
     public float Damage = 10.0f;
@@ -19,4 +19,9 @@ public class WeaponData : ScriptableObject
     [Header("Physics")]
     public AttackShape Shape = AttackShape.Circle;
     public float KnockbackForce = 5.0f;
+
+    private void OnEnable()
+    {
+        Slot = EquipmentSlot.Weapon;
+    }
 }

@@ -75,6 +75,12 @@ public class CombatHandler : MonoBehaviour
         return _equippedWeapon;
     }
 
+    public void UpdateEquippedWeapon(WeaponData newWeapon)
+    {
+        _equippedWeapon = newWeapon;
+        Debug.Log(newWeapon != null ? $"Waeapon updated to: {newWeapon.name}" : "Now Unarmed");
+    }
+
     private void OnDrawGizmosSelected()
     {
         if (_equippedWeapon == null)

@@ -24,7 +24,7 @@ public class StatusEffectManager : MonoBehaviour
 
     private void Awake() => _stats = GetComponent<ActorStats>();
 
-    private void ApplyStatus(StatusEffectData data)
+    public void ApplyStatus(StatusEffectData data)
     {
         var existing = _activeStatuses.Find(s => s.Data == data);
         if (existing != null)
@@ -43,7 +43,10 @@ public class StatusEffectManager : MonoBehaviour
     {
         if (status.Data.Type != StatusType.DoT)
         {
-            ApplyStatChange(status.Data, true);
+            _stats.UpdateMaxVitalsProportionally(() =>
+            {
+                ApplyStatChange(status.Data, true);
+            });
         }
 
         while (status.RemainingTime > 0)
@@ -64,7 +67,9 @@ public class StatusEffectManager : MonoBehaviour
 
         if (status.Data.Type != StatusType.DoT)
         {
-            ApplyStatChange(status.Data, false);
+            _stats.UpdateMaxVitalsProportionally(() => {
+                ApplyStatChange(status.Data, false);
+            });
 
             // TODO: Example for healing
             _stats.CurrentHP = Mathf.Min(_stats.CurrentHP, _stats.MaxHP);
