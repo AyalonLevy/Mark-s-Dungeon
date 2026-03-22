@@ -14,7 +14,7 @@ public class PlayerInteractionHandler : MonoBehaviour
         {
             if (target.TryGetComponent(out IInteractable interactable))
             {
-                interactable.Interact();
+                interactable.Interact(gameObject);
                 break;
             }
         }
